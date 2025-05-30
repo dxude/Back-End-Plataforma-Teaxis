@@ -1,0 +1,90 @@
+package br.com.teaxis.api.service;
+
+import br.com.teaxis.api.dto.DadosAtualizacaoUsuario;
+import br.com.teaxis.api.dto.DadosCadastroUsuario;
+import br.com.teaxis.api.dto.UsuarioResponseDTO;
+import br.com.teaxis.api.model.Usuario;
+import br.com.teaxis.api.repository.UsuarioRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class UsuarioService {
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public Usuario cadastrarUsuario(DadosCadastroUsuario dados) {
+        if (usuarioRepository.findByEmail(dados.email()) != null) {
+            throw new RuntimeException("Email já cadastrado!");
+        }
+
+        Usuario novoUsuario = new Usuario();
+        novoUsuario.setNome(dados.nome());
+        novoUsuario.setEmail(dados.email());
+        novoUsuario.setSenha(passwordEncoder.encode(dados.senha()));
+        
+        
+        novoUsuario.setTipo(dados.tipo());
+        novoUsuario.setDataNascimento(dados.dataNascimento());
+        novoUsuario.setGenero(dados.genero());
+        novoUsuario.setCidade(dados.cidade());
+        novoUsuario.setEstado(dados.estado());
+        novoUsuario.setTipoNeurodivergencia(dados.tipoNeurodivergencia());
+        novoUsuario.setPreferenciasSensoriais(dados.preferenciasSensoriais());
+        novoUsuario.setModoComunicacao(dados.modoComunicacao());
+        novoUsuario.setHistoricoEscolar(dados.historicoEscolar());
+        novoUsuario.setHobbies(dados.hobbies());
+        
+
+        return usuarioRepository.save(novoUsuario);
+    }
+
+    public List<UsuarioResponseDTO> listarTodos() {
+        return usuarioRepository.findAll()
+                .stream()
+                .map(UsuarioResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public UsuarioResponseDTO buscarPorId(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + id));
+        return new UsuarioResponseDTO(usuario);
+    }
+
+    public UsuarioResponseDTO atualizarUsuario(Long id, DadosAtualizacaoUsuario dados) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + id));
+
+        if (dados.nome() != null) {
+            usuario.setNome(dados.nome());
+        }
+        if (dados.cidade() != null) {
+            usuario.setCidade(dados.cidade());
+        }
+        if (dados.estado() != null) {
+            usuario.setEstado(dados.estado());
+        }
+        if (dados.hobbies() != null) {
+            usuario.setHobbies(dados.hobbies());
+        }
+        
+        return new UsuarioResponseDTO(usuario);
+    }
+
+    public void excluirUsuario(Long id) {
+        if (!usuarioRepository.existsById(id)) {
+            throw new EntityNotFoundException("Usuário não encontrado com o ID: " + id);
+        }
+        usuarioRepository.deleteById(id);
+    }
+}
