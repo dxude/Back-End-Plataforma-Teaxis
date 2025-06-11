@@ -15,10 +15,9 @@ public class AutenticacaoService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var usuario = repository.findByEmail(username);
-        if (usuario == null) {
-            throw new UsernameNotFoundException("Dados de usuário inválidos!");
-        }
-        return usuario;
+        // Esta é a única linha necessária dentro do método.
+        // Ela busca o usuário ou lança uma exceção se não o encontrar.
+        return repository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Dados de login inválidos!"));
     }
 }

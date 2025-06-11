@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import br.com.teaxis.api.exception.ValidacaoException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,9 +24,9 @@ public class UsuarioService {
     private PasswordEncoder passwordEncoder;
 
     public Usuario cadastrarUsuario(DadosCadastroUsuario dados) {
-        if (usuarioRepository.findByEmail(dados.email()) != null) {
-            throw new RuntimeException("Email já cadastrado!");
-        }
+    if (usuarioRepository.findByEmail(dados.email()).isPresent()) {
+        throw new ValidacaoException("Email já cadastrado!");
+    }
 
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome(dados.nome());

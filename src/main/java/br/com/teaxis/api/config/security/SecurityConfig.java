@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req -> {
                     req.requestMatchers(HttpMethod.POST, "/login").permitAll();
                     req.requestMatchers(HttpMethod.POST, "/usuarios/registrar").permitAll();
+                    req.requestMatchers(HttpMethod.GET, "/profissionais").permitAll();
                     req.requestMatchers("/h2-console/**").permitAll();
                      req.requestMatchers("/error").permitAll();
                     req.anyRequest().authenticated();
