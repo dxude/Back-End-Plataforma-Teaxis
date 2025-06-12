@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.time.temporal.ChronoUnit;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -48,12 +49,9 @@ public class TokenService {
         }
     }
 
-    /**
-     * Método privado para calcular a data de expiração do token.
-     * @return Um Instant representando o momento exato da expiração (2 horas no futuro).
-     */
     private Instant dataExpiracao() {
-        // Define que o token expira em 2 horas a partir do momento atual, considerando o fuso horário de Brasília (-03:00)
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
-    }
+    // Pega o momento ATUAL em tempo universal (UTC) e adiciona 2 horas.
+    // Simples, direto e à prova de erros de fuso horário.
+    return Instant.now().plus(2, ChronoUnit.HOURS);
+}
 }
