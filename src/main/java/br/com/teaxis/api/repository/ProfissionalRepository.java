@@ -7,26 +7,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional; 
-import java.util.Set;
+import java.util.Optional;
 
 @Repository
 public interface ProfissionalRepository extends JpaRepository<Profissional, Long> {
 
+    Optional<Profissional> findByUsuarioId(Long usuarioId);
+
     /**
-     * Busca profissionais que correspondam a PELO MENOS UM dos critérios de especialização
-     * ou método, e que AINDA NÃO tenham sido sugeridos para um usuário específico.
-     * Esta busca é muito mais eficiente que carregar todos os profissionais na memória.
+     * Busca profissionais que AINDA NÃO tenham sido sugeridos (Matching) para este usuário.
+     * A filtragem por especialização (String) será feita no Service (Java) para simplificar.
      */
     @Query("SELECT p FROM Profissional p WHERE " +
-           "(EXISTS (SELECT 1 FROM p.especializacoes e WHERE e IN :especializacoes) OR " +
-           "EXISTS (SELECT 1 FROM p.metodosUtilizados m WHERE m IN :metodos)) AND " +
            "p.id NOT IN (SELECT m.profissional.id FROM Matching m WHERE m.usuario.id = :usuarioId)")
-    List<Profissional> findProfissionaisCompativeis(
-            @Param("especializacoes") Set<String> especializacoes,
-            @Param("metodos") Set<String> metodos,
-            @Param("usuarioId") Long usuarioId
-    );
-
-    Optional<Profissional> findByUsuarioId(Long usuarioId);
+    List<Profissional> findCandidatosParaMatching(@Param("usuarioId") Long usuarioId);
+    
 }

@@ -7,6 +7,7 @@ import br.com.teaxis.api.model.Usuario;
 import br.com.teaxis.api.repository.ProfissionalRepository;
 import br.com.teaxis.api.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

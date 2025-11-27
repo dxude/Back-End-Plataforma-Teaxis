@@ -3,13 +3,15 @@ package br.com.teaxis.api.service;
 import br.com.teaxis.api.dto.DadosAtualizacaoUsuario;
 import br.com.teaxis.api.dto.DadosCadastroUsuario;
 import br.com.teaxis.api.dto.UsuarioResponseDTO;
+import br.com.teaxis.api.exception.ValidacaoException;
+import br.com.teaxis.api.model.TipoUsuario;
 import br.com.teaxis.api.model.Usuario;
 import br.com.teaxis.api.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import br.com.teaxis.api.exception.ValidacaoException;
+import org.springframework.transaction.annotation.Transactional; 
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,18 +25,31 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Transactional 
     public Usuario cadastrarUsuario(DadosCadastroUsuario dados) {
-    if (usuarioRepository.findByEmail(dados.email()).isPresent()) {
-        throw new ValidacaoException("Email já cadastrado!");
-    }
+        if (usuarioRepository.findByEmail(dados.email()).isPresent()) {
+            throw new ValidacaoException("Email já cadastrado!");
+        }
 
         Usuario novoUsuario = new Usuario();
         novoUsuario.setNome(dados.nome());
         novoUsuario.setEmail(dados.email());
         novoUsuario.setSenha(passwordEncoder.encode(dados.senha()));
+
         
+        if (dados.tipo() != null && !dados.tipo().isBlank()) {
+            try {
         
-        novoUsuario.setTipo(dados.tipo());
+                novoUsuario.setTipo(TipoUsuario.valueOf(dados.tipo().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new ValidacaoException("Tipo de usuário inválido! Use: USUARIO, PROFISSIONAL ou FAMILIA");
+            }
+        } else {
+            
+            novoUsuario.setTipo(TipoUsuario.USUARIO);
+        }
+        
+
         novoUsuario.setDataNascimento(dados.dataNascimento());
         novoUsuario.setGenero(dados.genero());
         novoUsuario.setCidade(dados.cidade());
@@ -44,7 +59,6 @@ public class UsuarioService {
         novoUsuario.setModoComunicacao(dados.modoComunicacao());
         novoUsuario.setHistoricoEscolar(dados.historicoEscolar());
         novoUsuario.setHobbies(dados.hobbies());
-        
 
         return usuarioRepository.save(novoUsuario);
     }
@@ -62,6 +76,7 @@ public class UsuarioService {
         return new UsuarioResponseDTO(usuario);
     }
 
+    @Transactional 
     public UsuarioResponseDTO atualizarUsuario(Long id, DadosAtualizacaoUsuario dados) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado com o ID: " + id));
@@ -79,6 +94,9 @@ public class UsuarioService {
             usuario.setHobbies(dados.hobbies());
         }
         
+        usuarioRepository.save(usuario);
+        
+
         return new UsuarioResponseDTO(usuario);
     }
 

@@ -24,39 +24,36 @@ public class MatchingService {
     private record ProfissionalComPontuacao(Profissional profissional, int pontuacao) {}
 
     public List<Matching> sugerirMatchesParaUsuario(Long usuarioId) {
+
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário com ID " + usuarioId + " não encontrado."));
 
-       
-        Set<String> especializacoesAlvo = Set.of(usuario.getTipoNeurodivergencia()); 
-        Set<String> metodosAlvo = traduzirComunicacaoParaMetodos(usuario.getModoComunicacao()); 
+        String especializacaoAlvo = usuario.getTipoNeurodivergencia();
+        Set<String> metodosAlvo = traduzirComunicacaoParaMetodos(usuario.getModoComunicacao());
         Set<String> hobbiesDoUsuario = usuario.getHobbies();
 
-    
-        List<Profissional> candidatos = profissionalRepository.findProfissionaisCompativeis(
-                especializacoesAlvo,
-                metodosAlvo,
-                usuarioId
-        );
 
-        // Agora, damos uma nota para cada candidato com base no quão bem ele se encaixa.
+        List<Profissional> candidatos = profissionalRepository.findCandidatosParaMatching(usuarioId);
+
         List<ProfissionalComPontuacao> profissionaisPontuados = new ArrayList<>();
+
         for (Profissional p : candidatos) {
             int pontuacao = 0;
-            // Pontos por especialização compatível
-            for (String esp : p.getEspecializacoes()) {
-                if (especializacoesAlvo.contains(esp)) {
-                    pontuacao += 10;
-                }
+
+        
+            if (contemTexto(p.getEspecializacoes(), especializacaoAlvo)) {
+                pontuacao += 10;
             }
-            for (String metodo : p.getMetodosUtilizados()) {
-                if (metodosAlvo.contains(metodo)) {
+
+            for (String metodo : metodosAlvo) {
+                if (contemTexto(p.getMetodosUtilizados(), metodo)) {
                     pontuacao += 5;
                 }
             }
-            for (String hobby : p.getHobbies()) { 
-                if (hobbiesDoUsuario.contains(hobby)) {
-                    pontuacao += 1;
+
+            for (String hobbyUsuario : hobbiesDoUsuario) {
+                if (contemTexto(p.getHobbies(), hobbyUsuario)) {
+                    pontuacao += 2; 
                 }
             }
             
@@ -72,7 +69,6 @@ public class MatchingService {
                 .map(ProfissionalComPontuacao::profissional)
                 .toList();
 
-        // Para cada um dos melhores, criamos um registro de "Matching" e salvamos no banco.
         return melhoresProfissionais.stream().map(profissional -> {
             Matching match = new Matching();
             match.setUsuario(usuario);
@@ -83,16 +79,21 @@ public class MatchingService {
         }).collect(Collectors.toList());
     }
 
+    private boolean contemTexto(String fonte, String palavraChave) {
+        if (fonte == null || palavraChave == null) return false;
+        return fonte.toLowerCase().contains(palavraChave.toLowerCase());
+    }
+
     private Set<String> traduzirComunicacaoParaMetodos(String modoComunicacao) {
         if (modoComunicacao == null || modoComunicacao.isBlank()) {
             return Set.of();
         }
         String texto = modoComunicacao.toLowerCase();
         if (texto.contains("pecs") || texto.contains("visual") || texto.contains("pictograma")) {
-            return Set.of("PECS", "Comunicação Alternativa e Aumentativa", "Comunicação Visual");
+            return Set.of("PECS", "Comunicação Alternativa", "Visual");
         }
-        if (texto.contains("verbal")) {
-            return Set.of("Terapia da Fala");
+        if (texto.contains("verbal") || texto.contains("fala")) {
+            return Set.of("Fonoaudiologia", "Fala");
         }
         return Set.of();
     }

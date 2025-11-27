@@ -21,6 +21,6 @@ public class Matching {
     @JoinColumn(name = "profissional_id", nullable = false)
     private Profissional profissional;
 
-    private String status; // Ex: "SUGERIDO", "ACEITO", "RECUSADO"
+    private String status; 
     private LocalDate dataSugestao;
 }

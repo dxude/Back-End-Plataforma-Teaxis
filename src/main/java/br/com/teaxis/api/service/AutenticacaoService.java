@@ -1,23 +1,54 @@
 package br.com.teaxis.api.service;
 
+import br.com.teaxis.api.dto.CadastroProfissionalDTO;
+import br.com.teaxis.api.model.Profissional;
+import br.com.teaxis.api.model.TipoUsuario; 
+import br.com.teaxis.api.model.Usuario;
+import br.com.teaxis.api.repository.ProfissionalRepository;
 import br.com.teaxis.api.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder; 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AutenticacaoService implements UserDetailsService {
+public class AutenticacaoService {
 
     @Autowired
-    private UsuarioRepository repository;
+    private UsuarioRepository usuarioRepository;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Esta é a única linha necessária dentro do método.
-        // Ela busca o usuário ou lança uma exceção se não o encontrar.
-        return repository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Dados de login inválidos!"));
+    @Autowired
+    private ProfissionalRepository profissionalRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder; 
+
+
+    @Transactional
+    public void cadastrarProfissional(CadastroProfissionalDTO dto) {
+        
+        if (usuarioRepository.findByEmail(dto.getEmail()) != null) {
+             throw new RuntimeException("Email já cadastrado!");
+        }
+
+        Usuario novoUsuario = new Usuario();
+        novoUsuario.setNome(dto.getNome());
+        novoUsuario.setEmail(dto.getEmail());
+        novoUsuario.setSenha(passwordEncoder.encode(dto.getSenha())); 
+        novoUsuario.setTipo(TipoUsuario.PROFISSIONAL); 
+        novoUsuario.setCidade(dto.getCidade());
+        novoUsuario.setEstado(dto.getEstado());
+        novoUsuario.setDataNascimento(dto.getDataNascimento());
+        
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+
+        Profissional novoProfissional = new Profissional();
+        novoProfissional.setUsuario(usuarioSalvo);
+        novoProfissional.setCertificacoes(dto.getCertificacoes());
+        novoProfissional.setEspecializacoes(dto.getEspecializacoes());
+        novoProfissional.setMetodosUtilizados(dto.getMetodosUtilizados());
+        novoProfissional.setDisponibilidade(dto.getDisponibilidade());
+        
+        profissionalRepository.save(novoProfissional);
     }
 }

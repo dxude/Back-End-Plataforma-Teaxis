@@ -81,7 +81,6 @@ public class SessaoService {
         Sessao sessao = sessaoRepository.findById(sessaoId)
                 .orElseThrow(() -> new EntityNotFoundException("Sessão não encontrada com ID: " + sessaoId));
 
-        // Lógica de permissão: Quem pode mudar qual status?
         if (!sessao.getProfissional().getUsuario().getId().equals(usuarioLogado.getId()) &&
             !sessao.getUsuario().getId().equals(usuarioLogado.getId())) {
             throw new SecurityException("Usuário não autorizado a modificar esta sessão.");
@@ -89,7 +88,6 @@ public class SessaoService {
 
         sessao.setStatus(dados.novoStatus());
         if (dados.observacoes() != null && usuarioLogado.getId().equals(sessao.getProfissional().getUsuario().getId())) {
-            // Só permite que o profissional adicione/altere observacoesProfissional
              String obsAtuais = sessao.getObservacoesProfissional() == null ? "" : sessao.getObservacoesProfissional() + "\n";
             sessao.setObservacoesProfissional(obsAtuais + "Status alterado para " + dados.novoStatus() + ": " + dados.observacoes());
         }

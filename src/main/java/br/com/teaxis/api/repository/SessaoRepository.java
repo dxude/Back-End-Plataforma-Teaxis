@@ -10,5 +10,4 @@ import java.util.List;
 public interface SessaoRepository extends JpaRepository<Sessao, Long> {
     List<Sessao> findByUsuarioIdOrderByDataHoraAgendamentoDesc(Long usuarioId);
     List<Sessao> findByProfissionalIdOrderByDataHoraAgendamentoDesc(Long profissionalId);
-    //  adicionar mais métodos de busca customizados aqui no futuro, se necessário
 }
