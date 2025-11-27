@@ -24,7 +24,7 @@ public class TokenService {
             Algorithm algoritmo = Algorithm.HMAC256(secret);
             Instant dataDeExpiracao = dataExpiracao();
 
-            // LOG DE DEBUG ADICIONADO
+            // DEBUG 
             System.out.println(">>> GERANDO TOKEN QUE EXPIRA EM: " + dataDeExpiracao);
 
             return JWT.create()
@@ -40,7 +40,7 @@ public class TokenService {
 
     public String getSubject(String tokenJWT) {
         try {
-            // LOG DE DEBUG ADICIONADO
+            // DEBUG
             System.out.println(">>> VERIFICANDO TOKEN. HORA ATUAL DO SERVIDOR: " + Instant.now());
             
             Algorithm algoritmo = Algorithm.HMAC256(secret);
@@ -50,14 +50,12 @@ public class TokenService {
                     .verify(tokenJWT)
                     .getSubject();
         } catch (JWTVerificationException exception) {
-            // Lançamos a exceção original junto para ter mais detalhes no log
+
             throw new RuntimeException("Token JWT inválido ou expirado!", exception);
         }
     }
 
     private Instant dataExpiracao() {
-        // Pega o momento ATUAL em tempo universal (UTC) e adiciona 2 horas.
-        // Esta é a forma mais robusta e imune a erros de fuso horário.
         return Instant.now().plus(2, ChronoUnit.HOURS);
     }
 }

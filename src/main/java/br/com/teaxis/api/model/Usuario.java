@@ -29,7 +29,10 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String senha;
 
-    private String tipo; // "USUARIO", "PROFISSIONAL", "FAMILIA"
+
+    @Enumerated(EnumType.STRING) 
+    private TipoUsuario tipo; 
+
     private LocalDate dataNascimento;
     private String genero;
     private String cidade;
@@ -49,7 +52,6 @@ public class Usuario implements UserDetails {
     @CollectionTable(name = "usuario_hobbies", joinColumns = @JoinColumn(name = "usuario_id"))
     @Column(name = "hobby")
     private Set<String> hobbies;
-
     
     @OneToMany(mappedBy = "usuario")
     private List<Avaliacao> avaliacoesFeitas;
@@ -57,15 +59,14 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "usuario")
     private List<Favorito> favoritos;
 
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.tipo == null) {
             return List.of(new SimpleGrantedAuthority("ROLE_USER")); 
         }
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.tipo.toUpperCase()));
-    }
+
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.tipo.name()));
+         }
 
     @Override
     public String getPassword() {
@@ -79,22 +80,21 @@ public class Usuario implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // A conta não expira
+        return true; 
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // A conta não está bloqueada
+        return true; 
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // As credenciais não expiram
+        return true; 
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // A conta está habilitada
+        return true; 
     }
-    
 }

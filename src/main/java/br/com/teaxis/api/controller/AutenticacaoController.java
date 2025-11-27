@@ -27,20 +27,20 @@ public class AutenticacaoController {
     private TokenService tokenService;
 
     @PostMapping
-public ResponseEntity efetuarLogin(@RequestBody @Valid DadosAutenticacao dados) {
-    var authenticationToken = new UsernamePasswordAuthenticationToken(dados.email(), dados.senha());
-    var authentication = manager.authenticate(authenticationToken);
+    public ResponseEntity efetuarLogin(@RequestBody @Valid DadosAutenticacao dados) {
+        var authenticationToken = new UsernamePasswordAuthenticationToken(dados.email(), dados.senha());
+        var authentication = manager.authenticate(authenticationToken);
 
-    // Pega o objeto Usuario completo que foi autenticado
-    var usuario = (Usuario) authentication.getPrincipal();
+        
+        var usuario = (Usuario) authentication.getPrincipal();
+        
     
-    // Gera o token para esse usuário
-    var tokenJWT = tokenService.gerarToken(usuario);
+        var tokenJWT = tokenService.gerarToken(usuario);
 
-    // Cria um DTO com os dados públicos do usuário
-    var usuarioDTO = new UsuarioResponseDTO(usuario);
 
-    // Retorna uma resposta contendo o TOKEN e os DADOS DO USUÁRIO
-    return ResponseEntity.ok(new DadosTokenJWT(tokenJWT, usuarioDTO));
-}
+        var usuarioDTO = new UsuarioResponseDTO(usuario);
+
+
+        return ResponseEntity.ok(new DadosTokenJWT(tokenJWT, usuarioDTO));
+    }
 }
