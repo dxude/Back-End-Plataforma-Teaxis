@@ -1,10 +1,10 @@
-package seu.pacote.services;
+package br.com.teaxis.api.service;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
-import seu.pacote.dto.MetaDTO;
-import seu.pacote.models.Meta;
-import seu.pacote.repositories.MetaRepository;
+import br.com.teaxis.api.dto.MetaDTO;
+import br.com.teaxis.api.model.Meta;
+import br.com.teaxis.api.repository.MetaRepository;
 
 @Service
 public class MetaService {

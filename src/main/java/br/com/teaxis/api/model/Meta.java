@@ -1,4 +1,4 @@
-package seu.pacote.models;
+package br.com.teaxis.api.model;
 
 import jakarta.persistence.*;
 

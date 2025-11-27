@@ -1,10 +1,10 @@
-package seu.pacote.controllers;
+package br.com.teaxis.api.controller;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
-import seu.pacote.dto.MetaDTO;
-import seu.pacote.models.Meta;
-import seu.pacote.services.MetaService;
+import br.com.teaxis.api.dto.MetaDTO;
+import br.com.teaxis.api.model.Meta;
+import br.com.teaxis.api.service.MetaService;
 
 @RestController
 @RequestMapping("/metas")

@@ -1,10 +1,13 @@
 package br.com.teaxis.api.dto;
 
+import lombok.Data; 
 import java.time.LocalDate;
 
-public record EvolucaoDTO(
-    Long metaId,
-    LocalDate dataRegistro,
-    Double progresso,
-    String comentario
-) {}
+@Data
+public class EvolucaoDTO {
+
+    private Long metaId;
+    private LocalDate dataRegistro;
+    private String progresso;
+    private String comentario;
+}
