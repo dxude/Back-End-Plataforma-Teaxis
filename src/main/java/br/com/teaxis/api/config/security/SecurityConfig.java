@@ -33,7 +33,7 @@ public class SecurityConfig {
                     req.requestMatchers(HttpMethod.GET, "/profissionais").permitAll();
                     req.requestMatchers("/h2-console/**").permitAll();
                      req.requestMatchers("/error").permitAll();
-                    req.anyRequest().authenticated();
+                    req.anyRequest().authenticated();   
                 })
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
