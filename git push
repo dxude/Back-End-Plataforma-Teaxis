@@ -1,0 +1,26 @@
+[33ma899287[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/Mensagem[m[33m)[m feat: cria NotificacaoController que cria endpoints REST
+[33mf30e03f[m feat: implementa NotificacaoService de regas de negócio
+[33m2370c3a[m feat: cria DTOs de entrada e resposta de Notificacao
+[33m30acf29[m feat: adiciona NotificacaoRepository com consulta por usuário
+[33m8408c43[m feat: cria entidade Notificacao
+[33m3d5510d[m feat: adiciona MensagemController com endpoints REST
+[33mc291c4e[m feat: implementa MensagemService com envio e listagem
+[33mf9e9b11[m feat: cria DTOs para entrada e resposta de Mensagem
+[33mfba6316[m feat: adiciona MensagemRepository com busca por remetente ou destinatário
+[33m7650f78[m feat: cria entidade Mensagem com campos básicos
+[33m286a514[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/feature/Mensagem[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m Merge pull request #3 from dxude/feature/Plano-Colaborativo
+[33mb6d06d0[m[33m ([m[1;31morigin/feature/Plano-Colaborativo[m[33m)[m Feat: Implementação do Plano Colaborativo e ajustes nos services
+[33m9d277a8[m Fix: Correção de build (Lombok e nomes de pacotes)
+[33m3e5fb77[m Refatorando para usar Lombok e corrigir duplicidade
+[33m4600c59[m Finalizei a criação da entidade Evolucao com DTO, Service e Controller
+[33m8619c50[m Merge pull request #2 from dxude/feature/meta
+[33me13ac3a[m[33m ([m[1;31morigin/feature/meta[m[33m)[m Adicionando getters e setters na entidade Meta
+[33m9b57504[m Merge pull request #1 from dxude/feature/meta
+[33m25b7a16[m Implementação da entidade Meta no backend
+[33mae6dbbe[m fix(auth): Inclui DTO do usuário na resposta do token de login: A resposta de login retornava apenas o token JWT, o que impedia o frontend de saber para qual dashboard redirecionar o usuário (comum ou profissional).
+[33m8b70c1c[m mais uma alteração no tokenservice
+[33m2743fc0[m alteração no método dataExpiracao em tokenservice
+[33m927be4f[m Adiciona Dockerfile para deploy no Render
+[33md430bbb[m Prepara aplicação para deploy com perfis dev e prod
+[33mb0b2e38[m  atualizaçoes de config de segurança
+[33m45e1183[m Commit inicial do projeto Teaxis API
