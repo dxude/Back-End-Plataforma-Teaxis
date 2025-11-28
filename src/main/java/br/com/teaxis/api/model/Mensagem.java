@@ -4,9 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-/**
- * Entidade JPA que representa uma mensagem enviada entre usuários.
- */
+//Entidade JPA que representa uma mensagem enviada entre usuários.
+
 @Entity
 @Table(name = "mensagens")
 @Data 
