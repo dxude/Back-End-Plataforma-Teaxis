@@ -22,27 +22,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityFilter securityFilter) throws Exception {
         return http
-                .cors(Customizer.withDefaults()) 
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> {
-                
+            
                     
-                    req.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll();
-                    req.requestMatchers(HttpMethod.POST, "/api/v1/auth/google").permitAll(); 
-                    
-                    
-                    req.requestMatchers(HttpMethod.POST, "/api/v1/usuarios/registrar").permitAll();
-                    
-                    
-                    req.requestMatchers(HttpMethod.POST, "/api/v1/profissionais").permitAll();
-                    req.requestMatchers(HttpMethod.GET, "/api/v1/profissionais").permitAll();
+                    req.requestMatchers("/api/v1/auth/**").permitAll();        
+                    req.requestMatchers("/api/v1/usuarios/**").permitAll();     
+                    req.requestMatchers("/api/v1/profissionais/**").permitAll(); 
                     
                     
                     req.requestMatchers("/h2-console/**").permitAll();
                     req.requestMatchers("/error").permitAll();
                     req.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     
-                    
+                  
                     req.anyRequest().authenticated();
                 })
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
