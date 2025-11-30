@@ -2,17 +2,20 @@ package br.com.teaxis.api.service;
 
 import br.com.teaxis.api.dto.CadastroProfissionalDTO;
 import br.com.teaxis.api.model.Profissional;
-import br.com.teaxis.api.model.TipoUsuario; 
+import br.com.teaxis.api.model.TipoUsuario;
 import br.com.teaxis.api.model.Usuario;
 import br.com.teaxis.api.repository.ProfissionalRepository;
 import br.com.teaxis.api.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder; 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AutenticacaoService {
+public class AutenticacaoService implements UserDetailsService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -24,10 +27,15 @@ public class AutenticacaoService {
     private PasswordEncoder passwordEncoder; 
 
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return usuarioRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado!"));
+    }
+
     @Transactional
     public void cadastrarProfissional(CadastroProfissionalDTO dto) {
-        
-        if (usuarioRepository.findByEmail(dto.getEmail()) != null) {
+        if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
              throw new RuntimeException("Email já cadastrado!");
         }
 
