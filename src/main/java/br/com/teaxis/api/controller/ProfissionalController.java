@@ -15,7 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.List;
 
 @RestController
-@RequestMapping("/profissionais")
+@RequestMapping("/api/v1/profissionais")
 public class ProfissionalController {
 
     @Autowired
