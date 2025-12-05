@@ -1,6 +1,7 @@
 package br.com.teaxis.api.service;
 
 import br.com.teaxis.api.dto.CadastroProfissionalDTO;
+import br.com.teaxis.api.dto.ProfissionalResponseDTO; 
 import br.com.teaxis.api.model.Profissional;
 import br.com.teaxis.api.model.TipoUsuario;
 import br.com.teaxis.api.model.Usuario;
@@ -26,7 +27,6 @@ public class AutenticacaoService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder; 
 
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(username)
@@ -34,7 +34,7 @@ public class AutenticacaoService implements UserDetailsService {
     }
 
     @Transactional
-    public void cadastrarProfissional(CadastroProfissionalDTO dto) {
+    public ProfissionalResponseDTO cadastrarProfissional(CadastroProfissionalDTO dto) {
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
              throw new RuntimeException("Email já cadastrado!");
         }
@@ -48,6 +48,7 @@ public class AutenticacaoService implements UserDetailsService {
         novoUsuario.setEstado(dto.getEstado());
         novoUsuario.setDataNascimento(dto.getDataNascimento());
         
+        
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
 
         Profissional novoProfissional = new Profissional();
@@ -58,5 +59,7 @@ public class AutenticacaoService implements UserDetailsService {
         novoProfissional.setDisponibilidade(dto.getDisponibilidade());
         
         profissionalRepository.save(novoProfissional);
+        
+        return new ProfissionalResponseDTO(novoProfissional);
     }
 }

@@ -1,11 +1,10 @@
 package br.com.teaxis.api.config.security;
 
-import br.com.teaxis.api.config.security.SecurityFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer; 
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,18 +25,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> {
-            
+                    // Autenticação e Usuários
+                    req.requestMatchers("/api/v1/auth/**").permitAll();
+                    req.requestMatchers("/api/v1/usuarios/**").permitAll();
+                    req.requestMatchers("/api/v1/profissionais/**").permitAll();
                     
-                    req.requestMatchers("/api/v1/auth/**").permitAll();        
-                    req.requestMatchers("/api/v1/usuarios/**").permitAll();     
-                    req.requestMatchers("/api/v1/profissionais/**").permitAll(); 
-                    
-                    
+                    // --- NOVAS LIBERAÇÕES (Adicionadas agora) ---
+                    // Libera todos os métodos (GET, POST, etc) para Escolas e Planos
+                    req.requestMatchers("/escolas/**").permitAll();
+                    req.requestMatchers("/planos-colaborativos/**").permitAll();
+
+                    // Configurações Técnicas (H2, Swagger, Erros)
                     req.requestMatchers("/h2-console/**").permitAll();
                     req.requestMatchers("/error").permitAll();
                     req.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                     
-                  
+                    // Qualquer outra requisição precisa de token
                     req.anyRequest().authenticated();
                 })
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))

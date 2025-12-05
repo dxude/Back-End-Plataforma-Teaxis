@@ -4,7 +4,7 @@ import br.com.teaxis.api.dto.CadastroProfissionalDTO;
 import br.com.teaxis.api.dto.DadosAtualizacaoPerfilProfissionalDTO;
 import br.com.teaxis.api.dto.ProfissionalResponseDTO;
 import br.com.teaxis.api.model.Usuario;
-import br.com.teaxis.api.service.AutenticacaoService; 
+import br.com.teaxis.api.service.AutenticacaoService;
 import br.com.teaxis.api.service.ProfissionalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,30 +22,32 @@ public class ProfissionalController {
     private ProfissionalService profissionalService;
 
     @Autowired
-    private AutenticacaoService autenticacaoService; 
+    private AutenticacaoService autenticacaoService;
 
     @PostMapping
-    public ResponseEntity cadastrar(@RequestBody CadastroProfissionalDTO dto, UriComponentsBuilder uriBuilder) {
-
-        autenticacaoService.cadastrarProfissional(dto);
-
-        return ResponseEntity.status(201).build();
+    public ResponseEntity<ProfissionalResponseDTO> cadastrar(@RequestBody CadastroProfissionalDTO dto, UriComponentsBuilder uriBuilder) {
+        var novoProfissional = autenticacaoService.cadastrarProfissional(dto);
+        var uri = uriBuilder.path("/api/v1/profissionais/{id}")
+                .buildAndExpand(novoProfissional.id()).toUri();
+        
+        return ResponseEntity.created(uri).body(novoProfissional);
     }
-
 
     @GetMapping
     public ResponseEntity<List<ProfissionalResponseDTO>> listar() {
-        return ResponseEntity.ok(profissionalService.listarTodos());
+        var lista = profissionalService.listarTodos();
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProfissionalResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(profissionalService.buscarPorId(id));
+        var profissionalDTO = profissionalService.buscarPorId(id);
+        return ResponseEntity.ok(profissionalDTO);
     }
 
     @PutMapping("/perfil")
     public ResponseEntity<ProfissionalResponseDTO> atualizarPerfil(
-            @AuthenticationPrincipal Usuario usuarioLogado, 
+            @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestBody DadosAtualizacaoPerfilProfissionalDTO dados) {
         
         var resposta = profissionalService.atualizarOuCriarPerfil(usuarioLogado, dados);
