@@ -1,5 +1,6 @@
 package br.com.teaxis.api.config.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,10 +24,13 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private SecurityFilter securityFilter;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityFilter securityFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(Customizer.withDefaults()) // 💡 Agora ele vai ler o Bean personalizado que adicionamos abaixo
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> {
@@ -35,17 +39,17 @@ public class SecurityConfig {
                     req.requestMatchers("/api/v1/usuarios/**").permitAll();
                     req.requestMatchers("/api/v1/profissionais/**").permitAll();
                     
-                    // 🌟 ROTA DE MENSAGENS LIBERADA (Evita o Erro 403 no Front)
+                    // Rota de Mensagens Liberada
                     req.requestMatchers("/api/v1/mensagens/**").permitAll();
                     
                     // Outros Recursos do Sistema
                     req.requestMatchers("/escolas/**").permitAll();
                     req.requestMatchers("/planos-colaborativos/**").permitAll();
                     
-                    // LIBERAÇÃO DO MATCHING INTELIGENTE (Para testes no Swagger)
+                    // Liberação do Matching Inteligente
                     req.requestMatchers("/matching/**").permitAll();
 
-                    // Configurações Técnicas (H2, Swagger, Erros)
+                    // Configurações Técnicas
                     req.requestMatchers("/h2-console/**").permitAll();
                     req.requestMatchers("/error").permitAll();
                     req.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
@@ -58,11 +62,9 @@ public class SecurityConfig {
                 .build();
     }
 
-    // 🌐 BEAN DE CONFIGURAÇÃO GLOBAL DE CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
         configuration.setAllowedOrigins(Arrays.asList("*")); 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -81,5 +83,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    
 }
