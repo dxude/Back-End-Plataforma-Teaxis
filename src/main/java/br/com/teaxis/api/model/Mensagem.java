@@ -1,27 +1,29 @@
 package br.com.teaxis.api.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import java.time.LocalDateTime;
-
-//Entidade JPA que representa uma mensagem enviada entre usuários.
 
 @Entity
 @Table(name = "mensagens")
-@Data 
 public class Mensagem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long remetenteId;      
-    private Long destinatarioId;  
+    @Column(name = "remetente_email")
+    private String remetenteEmail;
 
-    @Column(nullable = false)
-    private String conteudo;       
+    @Column(name = "destinatario_email")
+    private String destinatarioEmail;
 
+    private String assunto;
+    
+    @Column(columnDefinition = "TEXT")
+    private String conteudo;
+    
+    @Column(name = "data_envio")
     private LocalDateTime dataEnvio = LocalDateTime.now();
+
+    // Getters, Setters e Construtores
 }
-
-

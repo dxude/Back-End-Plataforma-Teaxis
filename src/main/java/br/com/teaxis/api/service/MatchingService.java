@@ -1,100 +1,138 @@
 package br.com.teaxis.api.service;
 
+import br.com.teaxis.api.dto.EspecialistaIdexarDTO;
+import br.com.teaxis.api.dto.MatchResultadoDTO;
+import br.com.teaxis.api.dto.PacienteMatchRequestDTO;
 import br.com.teaxis.api.model.Matching;
 import br.com.teaxis.api.model.Profissional;
 import br.com.teaxis.api.model.Usuario;
 import br.com.teaxis.api.repository.MatchingRepository;
 import br.com.teaxis.api.repository.ProfissionalRepository;
 import br.com.teaxis.api.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class MatchingService {
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private ProfissionalRepository profissionalRepository;
-    @Autowired private MatchingRepository matchingRepository;
 
-    private record ProfissionalComPontuacao(Profissional profissional, int pontuacao) {}
+    private final WebClient webClient;
+    private final UsuarioRepository usuarioRepository;
+    private final ProfissionalRepository profissionalRepository;
+    private final MatchingRepository matchingRepository;
 
-    public List<Matching> sugerirMatchesParaUsuario(Long usuarioId) {
-
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário com ID " + usuarioId + " não encontrado."));
-
-        String especializacaoAlvo = usuario.getTipoNeurodivergencia();
-        Set<String> metodosAlvo = traduzirComunicacaoParaMetodos(usuario.getModoComunicacao());
-        Set<String> hobbiesDoUsuario = usuario.getHobbies();
-
-
-        List<Profissional> candidatos = profissionalRepository.findCandidatosParaMatching(usuarioId);
-
-        List<ProfissionalComPontuacao> profissionaisPontuados = new ArrayList<>();
-
-        for (Profissional p : candidatos) {
-            int pontuacao = 0;
-
-        
-            if (contemTexto(p.getEspecializacoes(), especializacaoAlvo)) {
-                pontuacao += 10;
-            }
-
-            for (String metodo : metodosAlvo) {
-                if (contemTexto(p.getMetodosUtilizados(), metodo)) {
-                    pontuacao += 5;
-                }
-            }
-
-            for (String hobbyUsuario : hobbiesDoUsuario) {
-                if (contemTexto(p.getHobbies(), hobbyUsuario)) {
-                    pontuacao += 2; 
-                }
-            }
-            
-            if (pontuacao > 0) {
-                profissionaisPontuados.add(new ProfissionalComPontuacao(p, pontuacao));
-            }
-        }
-
-        profissionaisPontuados.sort((a, b) -> Integer.compare(b.pontuacao(), a.pontuacao()));
-
-        List<Profissional> melhoresProfissionais = profissionaisPontuados.stream()
-                .limit(5)
-                .map(ProfissionalComPontuacao::profissional)
-                .toList();
-
-        return melhoresProfissionais.stream().map(profissional -> {
-            Matching match = new Matching();
-            match.setUsuario(usuario);
-            match.setProfissional(profissional);
-            match.setStatus("SUGERIDO");
-            match.setDataSugestao(LocalDate.now());
-            return matchingRepository.save(match);
-        }).collect(Collectors.toList());
+    public MatchingService(WebClient.Builder webClientBuilder, 
+                           UsuarioRepository usuarioRepository, 
+                           ProfissionalRepository profissionalRepository, 
+                           MatchingRepository matchingRepository) {
+        this.webClient = webClientBuilder.baseUrl("http://localhost:8000").build();
+        this.usuarioRepository = usuarioRepository;
+        this.profissionalRepository = profissionalRepository;
+        this.matchingRepository = matchingRepository;
     }
 
-    private boolean contemTexto(String fonte, String palavraChave) {
-        if (fonte == null || palavraChave == null) return false;
-        return fonte.toLowerCase().contains(palavraChave.toLowerCase());
+    /**
+     * Pega os dados do Profissional, monta a String clínica e envia para o banco vetorial Python
+     */
+    public void indexarProfissionalNoBancoVetorial(Profissional profissional) {
+        String textoClinico = String.format(
+            "Profissional: %s. Especializações: %s. Métodos e abordagens utilizadas: %s. Hobbies pessoais: %s.",
+            profissional.getUsuario().getNome(),
+            profissional.getEspecializacoes(),
+            profissional.getMetodosUtilizados(),
+            profissional.getHobbies()
+        );
+
+        EspecialistaIdexarDTO dto = new EspecialistaIdexarDTO(
+            profissional.getId(), 
+            profissional.getUsuario().getNome(), 
+            textoClinico
+        );
+
+        this.webClient.post()
+                .uri("/indexar-profissional")
+                .bodyValue(dto)
+                .retrieve()
+                .toBodilessEntity()
+                .block(); 
     }
 
-    private Set<String> traduzirComunicacaoParaMetodos(String modoComunicacao) {
-        if (modoComunicacao == null || modoComunicacao.isBlank()) {
-            return Set.of();
+    /**
+     * Executa a busca por similaridade semântica baseada nas respostas abertas do formulário do Usuário
+     */
+    public List<Matching> executarMatchingParaPaciente(Long pacienteId) {
+        Usuario paciente = usuarioRepository.findById(pacienteId)
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
+
+        String perfilConsolidado = String.format(
+            "Paciente com diagnóstico de %s, gênero %s, residente em %s-%s. " +
+            "Preferências Sensoriais: %s. Modo de Comunicação preferencial: %s. Hobbies e interesses: %s.",
+            paciente.getTipoNeurodivergencia(),
+            paciente.getGenero(),
+            paciente.getCidade(),
+            paciente.getEstado(),
+            paciente.getPreferenciasSensoriais(),
+            paciente.getModoComunicacao(),
+            paciente.getHobbies() != null ? String.join(", ", paciente.getHobbies()) : "Nenhum"
+        );
+
+        PacienteMatchRequestDTO requestDto = new PacienteMatchRequestDTO(perfilConsolidado);
+
+        List<MatchResultadoDTO> resultadosIa = this.webClient.post()
+                .uri("/buscar-match")
+                .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<MatchResultadoDTO>>() {})
+                .block();
+
+        List<Matching> listaMatchingsSalvos = new ArrayList<>();
+
+        if (resultadosIa != null) {
+            for (MatchResultadoDTO item : resultadosIa) {
+                Profissional prof = profissionalRepository.findById(item.id_profissional()).orElse(null);
+                
+                if (prof == null) {
+                    continue; 
+                }
+
+                Matching matching = new Matching();
+                matching.setUsuario(paciente);
+                matching.setProfissional(prof);
+                matching.setStatus("SUGERIDO");
+                matching.setDataSugestao(LocalDate.now());
+
+                listaMatchingsSalvos.add(matchingRepository.save(matching));
+            }
         }
-        String texto = modoComunicacao.toLowerCase();
-        if (texto.contains("pecs") || texto.contains("visual") || texto.contains("pictograma")) {
-            return Set.of("PECS", "Comunicação Alternativa", "Visual");
-        }
-        if (texto.contains("verbal") || texto.contains("fala")) {
-            return Set.of("Fonoaudiologia", "Fala");
-        }
-        return Set.of();
+
+        return listaMatchingsSalvos;
+    }
+
+    /**
+     * NOVO MÉTODO: Plano de fuga simulado para alimentar o front-end sem depender da IA
+     */
+    public List<Matching> obterMatchesSimulados(Long pacienteId) {
+        Usuario paciente = usuarioRepository.findById(pacienteId)
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
+
+        List<Profissional> profissionais = profissionalRepository.findAll();
+
+        long[] idContador = {1};
+        return profissionais.stream()
+                .map(prof -> {
+                    Matching m = new Matching();
+                    m.setId(idContador[0]++);
+                    m.setUsuario(paciente);
+                    m.setProfissional(prof);
+                    m.setStatus("SIMULADO");
+                    m.setDataSugestao(LocalDate.now());
+                    return m;
+                })
+                .collect(Collectors.toList());
     }
 }

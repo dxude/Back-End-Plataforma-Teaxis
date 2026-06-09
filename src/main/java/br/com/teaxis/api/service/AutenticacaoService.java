@@ -27,6 +27,10 @@ public class AutenticacaoService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder; 
 
+    // INJEÇÃO DA IA: Adicionando o serviço de matching
+    @Autowired
+    private MatchingService matchingService;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return usuarioRepository.findByEmail(username)
@@ -48,7 +52,6 @@ public class AutenticacaoService implements UserDetailsService {
         novoUsuario.setEstado(dto.getEstado());
         novoUsuario.setDataNascimento(dto.getDataNascimento());
         
-        
         Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
 
         Profissional novoProfissional = new Profissional();
@@ -58,8 +61,18 @@ public class AutenticacaoService implements UserDetailsService {
         novoProfissional.setMetodosUtilizados(dto.getMetodosUtilizados());
         novoProfissional.setDisponibilidade(dto.getDisponibilidade());
         
-        profissionalRepository.save(novoProfissional);
+        // Salva o profissional no banco de dados relacional
+        Profissional profissionalSalvo = profissionalRepository.save(novoProfissional);
         
-        return new ProfissionalResponseDTO(novoProfissional);
+        // AMARRAÇÃO COM O BANCO VETORIAL (IA)
+        try {
+            matchingService.indexarProfissionalNoBancoVetorial(profissionalSalvo);
+        } catch (Exception e) {
+            // Um bloco try-catch garante que se o microsserviço Python estiver offline, 
+            // o cadastro principal do profissional na plataforma ainda funcione com sucesso.
+            System.err.println("Aviso: Não foi possível enviar os dados do profissional para o banco vetorial. Erro: " + e.getMessage());
+        }
+        
+        return new ProfissionalResponseDTO(profissionalSalvo);
     }
 }
