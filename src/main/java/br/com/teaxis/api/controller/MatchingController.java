@@ -94,4 +94,21 @@ public class MatchingController {
             return ResponseEntity.ok(dtoResponse);
         }
     }
+
+
+    @Autowired
+private br.com.teaxis.api.repository.ProfissionalRepository profissionalRepository;
+
+@PostMapping("/sincronizar-ia")
+public ResponseEntity<String> sincronizarBancoVetorial() {
+    try {
+        List<Profissional> todos = profissionalRepository.findAll();
+        for (Profissional p : todos) {
+            matchingService.indexarProfissionalNoBancoVetorial(p);
+        }
+        return ResponseEntity.ok("Sincronizados " + todos.size() + " profissionais na IA local com sucesso!");
+    } catch (Exception e) {
+        return ResponseEntity.internalServerError().body("Erro ao sincronizar: " + e.getMessage());
+    }
+}
 }
