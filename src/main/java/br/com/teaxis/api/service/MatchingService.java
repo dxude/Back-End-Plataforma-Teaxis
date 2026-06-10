@@ -31,17 +31,12 @@ public class MatchingService {
                            ProfissionalRepository profissionalRepository, 
                            MatchingRepository matchingRepository) {
         
-        // MODIFICADO: Agora o Spring Boot na nuvem (Render) consegue achar a sua IA local pelo túnel do VS Code!
         this.webClient = webClientBuilder.baseUrl("https://5vxp627d-8000.brs.devtunnels.ms").build();
-        
         this.usuarioRepository = usuarioRepository;
         this.profissionalRepository = profissionalRepository;
         this.matchingRepository = matchingRepository;
     }
 
-    /**
-     * Pega os dados do Profissional, monta a String clínica e envia para o banco vetorial Python
-     */
     public void indexarProfissionalNoBancoVetorial(Profissional profissional) {
         String textoClinico = String.format(
             "Profissional: %s. Especializações: %s. Métodos e abordagens utilizadas: %s. Hobbies pessoais: %s.",
@@ -65,10 +60,7 @@ public class MatchingService {
                 .block(); 
     }
 
-    /**
-     * Executa a busca por similaridade semântica baseada nas respostas abertas do formulário do Usuário
-     */
-    public List<Matching> executarMatchingParaPaciente(Long pacienteId) {
+    public List<Profissional> executarMatchingParaPaciente(Long pacienteId) {
         Usuario paciente = usuarioRepository.findById(pacienteId)
                 .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
 
@@ -93,43 +85,30 @@ public class MatchingService {
                 .bodyToMono(new ParameterizedTypeReference<List<MatchResultadoDTO>>() {})
                 .block();
 
-        List<Matching> listaMatchingsSalvos = new ArrayList<>();
+        List<Profissional> profissionaisOrdenados = new ArrayList<>();
 
         if (resultadosIa != null) {
             for (MatchResultadoDTO item : resultadosIa) {
                 Profissional prof = profissionalRepository.findById(item.id_profissional()).orElse(null);
-                
-                if (prof == null) {
-                    continue; 
+                if (prof != null) {
+                    profissionaisOrdenados.add(prof);
                 }
-
-                Matching matching = new Matching();
-                matching.setUsuario(paciente);
-                matching.setProfissional(prof);
-                matching.setStatus("SUGERIDO");
-                matching.setDataSugestao(LocalDate.now());
-
-                listaMatchingsSalvos.add(matchingRepository.save(matching));
             }
         }
-
-        return listaMatchingsSalvos;
+        return profissionaisOrdenados;
     }
 
-    /**
-     * PLANO DE FUGA: Caso precise demonstrar o comportamento sem bater na IA
-     */
     public List<Matching> obterMatchesSimulados(Long pacienteId) {
         Usuario paciente = usuarioRepository.findById(pacienteId)
                 .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
 
         List<Profissional> profissionais = profissionalRepository.findAll();
+        java.util.concurrent.atomic.AtomicLong idContador = new java.util.concurrent.atomic.AtomicLong(1);
 
-        long[] idContador = {1};
         return profissionais.stream()
                 .map(prof -> {
                     Matching m = new Matching();
-                    m.setId(idContador[0]++);
+                    m.setId(idContador.getAndIncrement());
                     m.setUsuario(paciente);
                     m.setProfissional(prof);
                     m.setStatus("SIMULADO");
