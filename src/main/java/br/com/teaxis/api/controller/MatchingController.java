@@ -20,6 +20,10 @@ public class MatchingController {
     @Autowired
     private MatchingService matchingService;
 
+    /**
+     * DTO plano que reflete exatamente a estrutura de propriedades 
+     * que o componente React (BuscarEspecialistas.jsx) consome nos cards.
+     */
     public static record ProfissionalSimplesDTO(
         Long id,
         String nome,
@@ -32,39 +36,61 @@ public class MatchingController {
     @PostMapping("/paciente/{id}")
     public ResponseEntity<?> gerarMatchingInteligente(@PathVariable Long id) {
         List<ProfissionalSimplesDTO> dtoResponse = new ArrayList<>();
+        
         try {
-            // CORRIGIDO: O serviço real agora retorna List<Profissional>
+            // 1. Chama o serviço da IA que retorna a lista de profissionais ordenados por relevância
             List<Profissional> profissionaisOrdenados = matchingService.executarMatchingParaPaciente(id);
             
-            for (Profissional p : profissionaisOrdenados) {
-                dtoResponse.add(new ProfissionalSimplesDTO(
-                    p.getId(),
-                    p.getUsuario() != null ? p.getUsuario().getNome() : "Profissional",
-                    p.getEspecializacoes(),
-                    p.getMetodosUtilizados(),
-                    p.getHobbies(),
-                    new ArrayList<>()
-                ));
+            if (profissionaisOrdenados != null) {
+                for (Profissional p : profissionaisOrdenados) {
+                    if (p != null) {
+                        // Tratamento de segurança contra campos nulos para não quebrar o mapeamento no Front
+                        String nomeProfissional = (p.getUsuario() != null) ? p.getUsuario().getNome() : "Especialista TEAxis";
+                        String especializacao = (p.getEspecializacoes() != null) ? p.getEspecializacoes() : "Geral";
+                        String metodos = (p.getMetodosUtilizados() != null) ? p.getMetodosUtilizados() : "Abordagens Integradas";
+                        String hobbies = (p.getHobbies() != null) ? p.getHobbies() : "Sem biografia disponível";
+
+                        dtoResponse.add(new ProfissionalSimplesDTO(
+                            p.getId(),
+                            nomeProfissional,
+                            especializacao,
+                            metodos,
+                            hobbies,
+                            new ArrayList<>() // Evita que o 'item.localidades.map' estoure erro no JavaScript se estiver vazio
+                        ));
+                    }
+                }
             }
             return ResponseEntity.ok(dtoResponse);
             
         } catch (Exception e) {
-            System.out.println("Aviso: IA offline. Retornando dados simulados.");
-            // O plano de fuga simulado continua retornando List<Matching>, então extraímos aqui:
-            List<Matching> mockMatches = matchingService.obterMatchesSimulados(id); 
-            for (Matching m : mockMatches) {
-                if (m.getProfissional() != null) {
-                    Profissional p = m.getProfissional();
-                    dtoResponse.add(new ProfissionalSimplesDTO(
-                        p.getId(),
-                        p.getUsuario() != null ? p.getUsuario().getNome() : "Profissional Simulador",
-                        p.getEspecializacoes(),
-                        p.getMetodosUtilizados(),
-                        p.getHobbies(),
-                        new ArrayList<>()
-                    ));
+            System.out.println("Aviso: IA offline ou erro na rota principal. Acionando dados simulados de contingência.");
+            
+            try {
+                // 2. Plano de fuga: se o Python/DevTunnel falhar, o Front ainda renderiza os dados do banco H2/Neon
+                List<Matching> mockMatches = matchingService.obterMatchesSimulados(id); 
+                
+                if (mockMatches != null) {
+                    for (Matching m : mockMatches) {
+                        if (m != null && m.getProfissional() != null) {
+                            Profissional p = m.getProfissional();
+                            String nomeProfissional = (p.getUsuario() != null) ? p.getUsuario().getNome() : "Especialista Simulador";
+                            
+                            dtoResponse.add(new ProfissionalSimplesDTO(
+                                p.getId(),
+                                nomeProfissional,
+                                p.getEspecializacoes() != null ? p.getEspecializacoes() : "Simulado",
+                                p.getMetodosUtilizados() != null ? p.getMetodosUtilizados() : "Método",
+                                p.getHobbies() != null ? p.getHobbies() : "Biografia",
+                                new ArrayList<>()
+                            ));
+                        }
+                    }
                 }
+            } catch (Exception ex) {
+                System.out.println("Erro crítico ao gerar os dados simulados.");
             }
+            
             return ResponseEntity.ok(dtoResponse);
         }
     }
