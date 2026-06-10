@@ -30,7 +30,10 @@ public class MatchingService {
                            UsuarioRepository usuarioRepository, 
                            ProfissionalRepository profissionalRepository, 
                            MatchingRepository matchingRepository) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8000").build();
+        
+        // MODIFICADO: Agora o Spring Boot na nuvem (Render) consegue achar a sua IA local pelo túnel do VS Code!
+        this.webClient = webClientBuilder.baseUrl("https://5vxp627d-8000.brs.devtunnels.ms").build();
+        
         this.usuarioRepository = usuarioRepository;
         this.profissionalRepository = profissionalRepository;
         this.matchingRepository = matchingRepository;
@@ -114,7 +117,7 @@ public class MatchingService {
     }
 
     /**
-     * NOVO MÉTODO: Plano de fuga simulado para alimentar o front-end sem depender da IA
+     * PLANO DE FUGA: Caso precise demonstrar o comportamento sem bater na IA
      */
     public List<Matching> obterMatchesSimulados(Long pacienteId) {
         Usuario paciente = usuarioRepository.findById(pacienteId)
